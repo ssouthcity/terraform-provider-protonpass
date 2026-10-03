@@ -16,6 +16,8 @@
       pkgs.mkShell {
         packages = [
           pkgs.go
+          pkgs.golangci-lint
+          pkgs.opentofu
           pkgs.proton-pass-cli
         ];
       }
