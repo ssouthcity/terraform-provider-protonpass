@@ -5,6 +5,7 @@ package provider
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/action"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -13,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/ssouthcity/terraform-provider-protonpass/internal/protonpass"
 )
 
 var _ provider.Provider = &ProtonPassProvider{}
@@ -46,6 +48,14 @@ func (p *ProtonPassProvider) Configure(ctx context.Context, req provider.Configu
 	if resp.Diagnostics.HasError() {
 		return
 	}
+
+	client, err := protonpass.New()
+	if err != nil {
+		resp.Diagnostics.AddError("Proton Pass Error", fmt.Sprintf("Unable to configure provider, got error: %s", err))
+		return
+	}
+
+	resp.EphemeralResourceData = client
 }
 
 func (p *ProtonPassProvider) Resources(ctx context.Context) []func() resource.Resource {
@@ -53,7 +63,9 @@ func (p *ProtonPassProvider) Resources(ctx context.Context) []func() resource.Re
 }
 
 func (p *ProtonPassProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
-	return []func() ephemeral.EphemeralResource{}
+	return []func() ephemeral.EphemeralResource{
+		NewPasswordEphemeralResource,
+	}
 }
 
 func (p *ProtonPassProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
