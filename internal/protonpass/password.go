@@ -6,42 +6,60 @@ package protonpass
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"os/exec"
+	"strconv"
 )
 
-type BoolOption bool
-
-func (b *BoolOption) Option() string {
-	if *b {
-		return "true"
-	}
-	return "false"
+type generatePasswordConfig struct {
+	length           int
+	includeNumbers   bool
+	includeUppercase bool
+	includeSymbols   bool
 }
 
-type IntOption int
-
-func (i *IntOption) Option() string {
-	return fmt.Sprint(*i)
+var defaultGeneratePasswordConfig = generatePasswordConfig{
+	length:           32,
+	includeNumbers:   true,
+	includeSymbols:   true,
+	includeUppercase: true,
 }
 
-type GeneratePasswordOptions struct {
-	Length           IntOption
-	IncludeNumbers   BoolOption
-	IncludeUppercase BoolOption
-	IncludeSymbols   BoolOption
+type GeneratePasswordOption interface {
+	configurePasswordConfig(*generatePasswordConfig)
+}
+
+func (opt *LengthOption) configurePasswordConfig(config *generatePasswordConfig) {
+	config.length = opt.length
+}
+
+func (opt *NumbersOption) configurePasswordConfig(config *generatePasswordConfig) {
+	config.includeNumbers = opt.numbers
+}
+
+func (opt *SymbolsOption) configurePasswordConfig(config *generatePasswordConfig) {
+	config.includeSymbols = opt.symbols
+}
+
+func (opt *UppercaseOption) configurePasswordConfig(config *generatePasswordConfig) {
+	config.includeUppercase = opt.uppercase
 }
 
 type generatePasswordResponse struct {
 	Password string `json:"password"`
 }
 
-func (c *Client) GeneratePassword(settings GeneratePasswordOptions) (string, error) {
+func (c *Client) GeneratePassword(opts ...GeneratePasswordOption) (string, error) {
+	config := defaultGeneratePasswordConfig
+
+	for _, opt := range opts {
+		opt.configurePasswordConfig(&config)
+	}
+
 	cmd := exec.Command(c.bin, "password", "generate", "random",
-		"--length", settings.Length.Option(),
-		"--numbers", settings.IncludeNumbers.Option(),
-		"--uppercase", settings.IncludeUppercase.Option(),
-		"--symbols", settings.IncludeSymbols.Option(),
+		"--length", strconv.FormatInt(int64(config.length), 10),
+		"--numbers", strconv.FormatBool(config.includeNumbers),
+		"--uppercase", strconv.FormatBool(config.includeUppercase),
+		"--symbols", strconv.FormatBool(config.includeSymbols),
 		"--output", "json")
 
 	output := bytes.Buffer{}

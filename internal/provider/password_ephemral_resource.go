@@ -24,10 +24,10 @@ type PasswordEphemeralResource struct {
 }
 
 type PasswordEphemeralResourceModel struct {
-	Length           types.Int32 `tfsdk:"length"`
-	IncludeNumbers   types.Bool  `tfsdk:"include_numbers"`
-	IncludeUppercase types.Bool  `tfsdk:"include_uppercase"`
-	IncludeSymbols   types.Bool  `tfsdk:"include_symbols"`
+	Length    types.Int32 `tfsdk:"length"`
+	Numbers   types.Bool  `tfsdk:"numbers"`
+	Uppercase types.Bool  `tfsdk:"uppercase"`
+	Symbols   types.Bool  `tfsdk:"symbols"`
 
 	Value types.String `tfsdk:"value"`
 }
@@ -45,15 +45,15 @@ func (r *PasswordEphemeralResource) Schema(ctx context.Context, _ ephemeral.Sche
 				MarkdownDescription: "Amount of characters in the password",
 				Optional:            true,
 			},
-			"include_numbers": schema.BoolAttribute{
+			"numbers": schema.BoolAttribute{
 				MarkdownDescription: "Whether to include numbers in the generated password",
 				Optional:            true,
 			},
-			"include_uppercase": schema.BoolAttribute{
+			"uppercase": schema.BoolAttribute{
 				MarkdownDescription: "Whether to include uppercase characters in the generated password",
 				Optional:            true,
 			},
-			"include_symbols": schema.BoolAttribute{
+			"symbols": schema.BoolAttribute{
 				MarkdownDescription: "Whether to include symbols in the generated password",
 				Optional:            true,
 			},
@@ -92,17 +92,12 @@ func (r *PasswordEphemeralResource) Open(ctx context.Context, req ephemeral.Open
 		return
 	}
 
-	if err := r.client.Login(); err != nil {
-		resp.Diagnostics.AddError("Proton Pass Error", fmt.Sprintf("Unable to login, got error: %s", err))
-		return
-	}
-
-	password, err := r.client.GeneratePassword(protonpass.GeneratePasswordOptions{
-		Length:           protonpass.IntOption(int(data.Length.ValueInt32())),
-		IncludeNumbers:   protonpass.BoolOption(data.IncludeNumbers.ValueBool()),
-		IncludeUppercase: protonpass.BoolOption(data.IncludeUppercase.ValueBool()),
-		IncludeSymbols:   protonpass.BoolOption(data.IncludeSymbols.ValueBool()),
-	})
+	password, err := r.client.GeneratePassword(
+		protonpass.Length(int(data.Length.ValueInt32())),
+		protonpass.Numbers(data.Numbers.ValueBool()),
+		protonpass.Uppercase(data.Uppercase.ValueBool()),
+		protonpass.Symbols(data.Symbols.ValueBool()),
+	)
 	if err != nil {
 		resp.Diagnostics.AddError("Proton Pass Error", fmt.Sprintf("Unable to generate password, got error: %s", err))
 		return

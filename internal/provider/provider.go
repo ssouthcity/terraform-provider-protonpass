@@ -49,7 +49,7 @@ func (p *ProtonPassProvider) Configure(ctx context.Context, req provider.Configu
 		return
 	}
 
-	client, err := protonpass.New()
+	client, err := protonpass.NewClient()
 	if err != nil {
 		resp.Diagnostics.AddError("Proton Pass Error", fmt.Sprintf("Unable to configure provider, got error: %s", err))
 		return
@@ -64,6 +64,7 @@ func (p *ProtonPassProvider) Resources(ctx context.Context) []func() resource.Re
 
 func (p *ProtonPassProvider) EphemeralResources(ctx context.Context) []func() ephemeral.EphemeralResource {
 	return []func() ephemeral.EphemeralResource{
+		NewPassphraseEphemeralResource,
 		NewPasswordEphemeralResource,
 	}
 }

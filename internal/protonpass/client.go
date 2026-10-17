@@ -24,7 +24,7 @@ func WithBinary(path string) Option {
 	}
 }
 
-func New(opts ...Option) (*Client, error) {
+func NewClient(opts ...Option) (*Client, error) {
 	c := &Client{}
 
 	for _, opt := range opts {
